@@ -1,0 +1,199 @@
+#!/bin/bash
+
+#...functions.................. #
+
+function exiting ()
+{
+	echo -e "\nOperation aborted!!!....................."
+	exit 1
+}
+
+
+#... chk.................. #
+function git_check()
+{
+	echo "....................................................."
+	if [ $exit_status -eq 0 ]; then
+		echo "Repository cloned successfully."
+		echo "....................................................."
+	else
+		echo "Oops! something went wrong. Error cloning repository."
+		echo "Exit status code: $exit_status"
+		echo "....................................................."
+		exit 1
+	fi
+}
+
+
+curl_check()
+{
+    echo "....................................................."
+    if [ $exit_status -eq 0 ]; then
+        echo "Repository created successfully."
+		echo -e "..........................................................."
+		echo -e ""
+		echo -e "Preparing to clone the repo \"$REPONAME\" in the directory $(pwd)..."
+		echo -e "......................Cloning repo........................"
+		git clone https://ghp_$GTOKEN@github.com/$GUSERNAME/$REPONAME.git
+		exit_status=$?
+		git_check
+		echo -e ""
+		cd "$REPONAME"
+
+		echo -e "Setting up the local user(i.e commit author) for this repo"
+		echo -e "..........................................................."
+		echo -e "User: $GUSERNAME"
+		echo -e "Email: $GEMAIL"
+		echo -e "..........................................................."
+		echo -e ""
+		git config user.name "$GUSERNAME"
+		git config user.email "$GEMAIL"
+
+		echo -e "### $REPONAME and README were auto created\n\n\n\n\n###### We Rise by Lifting Others." > README.md
+		git add .
+		git commit -m "$REPONAME auto created"
+		git push
+
+		echo -e ".........................................................."
+		echo -e "Successful."
+		echo "\"$REPONAME\" has been created."
+		echo "This repo now reside in the Github Account \"$GUSERNAME\"."
+		echo "It has also been cloned into this directory."
+		echo "A Default Readme file has equally been created, staged and pushed to $GUSERNAME/$REPONAME for you."
+		echo -e "........................................................."
+
+    else
+        echo "Oops! something went wrong. Error creating repository."
+		echo "Exit status code: $exit_status_code"
+        echo "....................................................."
+        exit 1
+    fi
+}
+
+
+function get_git_details()
+{
+	read -p "Enter GitHub username >>> " GUSERNAME
+	if [[ -z "$GUSERNAME" ]]; then
+		echo -e "You did not answer the question."
+		exiting
+	fi
+
+	RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/users/$GUSERNAME")
+	if [ "$RESPONSE" -ne 200 ]; then
+		echo "Username \"$GUSERNAME\" does not exist on GitHub or there was an issue confirming the existence of the username."
+		exiting
+	fi
+
+	read -p "Enter your GitHub personal access token (without the \"ghp_\") >>> " GTOKEN
+    GTOKEN="${GTOKEN#ghp_}" #used to remove "ghp_" if user adds it
+	if [[ -z "$GTOKEN" ]]; then
+		echo -e "You did not answer the question."
+		exiting
+	fi
+}
+
+
+# ENTRY-POINT
+
+# Kindly supply your Github Username and Personal Access token(without the "ghp_").
+GUSERNAME="YOUR_GITHUB_USERNAME"
+GTOKEN="YOUR_PERSONAL_ACCESS_TOKEN"
+GEMAIL="YOUR_REGISTERED_GITHUB_EMAIL"
+
+REPONAME="$1"
+RESP="$2"
+exit_status=0
+
+if [[ -z "$GUSERNAME" ]]; then
+	get_git_details
+else
+	RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/users/$GUSERNAME")
+	if [ "$RESPONSE" -ne 200 ]; then
+		echo "Username \"$GUSERNAME\" does not exist on GitHub or there was an issue confirming the existence of the username."
+		exiting
+	fi
+fi
+
+
+if [[ -z "$REPONAME" ]]; then
+	echo ""
+	echo -n "Please provide a repository name to create in \"$GUSERNAME\" >>> "
+	read REPONAME
+
+	if [[ -z "$REPONAME" ]]; then
+		echo -e "\nYou can't create a repo without a name..."
+			exiting
+	fi
+fi
+echo ""
+
+existing_repo=$(curl -u "$GUSERNAME:ghp_$GTOKEN" "https://api.github.com/user/repos" 2>/dev/null \
+  | grep -o "\"name\": *\"$REPONAME\"" | wc -l)
+
+if [ "$existing_repo" -gt 0 ]; then
+	echo -e "Repository \"$REPONAME\" already exists in https://github.com/$GUSERNAME\nAborting creation."
+	exiting
+fi
+
+
+echo -n "Do you want the repository to be private? [Y/N] >>> "
+read -n 1 -s -r PRIVATE_OPTION
+echo -e "$PRIVATE_OPTION"
+
+if [[ -z "$PRIVATE_OPTION" ]]; then
+	echo -e "You did not answer the question."
+	exiting
+elif [[ ${#PRIVATE_OPTION} != 1 ]]; then
+	echo -e "Invalid response."
+	exiting
+
+elif [[ ${#PRIVATE_OPTION} =~ 1 && ("$PRIVATE_OPTION" =~ [yY]) ]]; then
+	PRIVATE_OPTION="true"
+
+elif [[ ${#PRIVATE_OPTION} =~ 1 && ("$PRIVATE_OPTION" =~ [nN]) ]]; then
+	PRIVATE_OPTION="false"
+fi
+
+
+echo -e "\nYou are creating the repository \"$REPONAME\" in the Account \"$GUSERNAME\"...\n"
+sleep 2
+if [[ -z "$RESP" ]]; then
+	echo -e "Pls, check your PATH and CURRENT DIRECTORY that you are not creating this repo inside an existing repo."
+	echo -e "Current Directory is: $PWD\n"
+	echo -n "Do you want to abort to fix this? [y/N] >>> "
+	read -n 1 -s -r RESP
+	echo -e "$RESP"
+	if [[ -z "$RESP" ]]; then
+		echo -e "You did not answer the question."
+		exiting
+
+	elif [[ ${#RESP} != 1 ]]; then
+		echo -e "Invalid response."
+		exiting
+
+	elif [[ ${#RESP} =~ 1 && ("$RESP" =~ [yY]) ]]; then
+		echo -e "Ok."
+		exiting
+
+	elif [[ ${#RESP} =~ 1 && ("$RESP" =~ [nN]) ]]; then
+		echo -e ""
+		# git init
+		# echo -e ""
+		echo -e "\nCreating $REPONAME as $( [[ "$PRIVATE_OPTION" == "true" ]] && echo "private" || echo "public" )\
+ in \"https://github.com/$GUSERNAME\" ......\n"
+
+		response=$(curl -u "$GUSERNAME:ghp_$GTOKEN" -X POST "https://api.github.com/user/repos" -d '{"name":"'$REPONAME'", "private":'"$PRIVATE_OPTION"'}' 2>&1)
+		exit_status_code=$?
+
+		# echo "................................................"
+
+		if [[ $response == *"\"name\": \"$REPONAME\""* ]]; then
+			exit_status=0
+		else
+			exit_status=1
+		fi
+		curl_check
+	fi
+fi
+echo -e ""

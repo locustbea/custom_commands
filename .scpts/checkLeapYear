@@ -1,0 +1,68 @@
+#!/bin/bash
+
+USERNAME="$1"
+EMAIL="$2"
+
+
+quit()
+{
+	local var="$1"
+
+	if [[ "$var" =~ [qnQN] || "$var" == "" ]]; then
+		echo -e ""
+		echo -e "Cheers"
+		exit 0
+	fi
+}
+
+echo ""
+echo -e "Author Identity Configuration"
+echo "........................................."
+echo ""
+while true; do
+	echo -n "Global or Local Identity congiguration? [g - Global] && [l - Local] >>> "
+	read -n 1 -s -r RESP
+	echo "$RESP"
+	if [[ "$RESP" =~ [lgqLGQ] ]]; then
+		quit "$RESP"
+		break
+	fi
+done
+
+if [[ "$RESP" =~ [lgLG] ]]; then
+	while true; do
+		echo ""
+		echo -n "Check your PATH AND CURRENT DIRECTORY to be sure you are in a Repo, are you? [y/N] >>> "
+		read -n 1 -s -r YNREPO
+		echo -e "$YNREPO"
+		if [[ "$YNREPO" =~ [ynqYNQ] ]]; then
+			quit "$YNREPO"
+			break
+		fi
+	done
+fi
+
+echo -n "Enter your Github Username >>> "
+read USERNAME
+quit "$USERNAME"
+
+echo -n "Enter your Github Email address >>> "
+read EMAIL
+quit "$EMAIL"
+
+echo ""
+echo -e "Configuring Username: $USERNAME"
+echo -e "Configuring Email: $EMAIL"
+echo -e "Specific to this repo alone..."
+echo "........................................."
+if [[ "$RESP" =~ [lL] ]]; then
+	echo -e "Local Author Identity config..."
+	git config user.email "$EMAIL"
+	git config user.name "$USERNAME"
+elif [[ "$RESP" =~ [gG] ]]; then
+	echo -e "Global Author Identity config..."
+	git config --global user.email "$EMAIL"
+	git config --global user.name "$USERNAME"
+fi
+echo "........................................."
+echo -e "Done...\n"
