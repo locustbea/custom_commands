@@ -129,7 +129,18 @@ This file contains the notable changes made to the Custom Commands project.
    - Fixed response to wrong input entered by users during installation and command execution
    - Fixed option display to be limited to alphabets and not numbers
    - Removed repeated lines of codes that need not be
-
+   - ## Authors
+<details>
+    <summary>Olalekan Onifade</summary>
+    <ul>
+    <li><a href="https://www.github.com/locustbea">Github</a></li>
+    <li><a href="https://www.twitter.com/locustbea">Twitter</a></li>
+    <li><a href="mailto:locustbea@yahoo.com">e-mail</a></li>
+    <li><a href="https://www.facebook.com/BABAGBA">Facebook</a></li>
+    <li><a href="https://www.instagram.com/i_am_fabulurs">Instagram</a></li>
+    <li><a href="https://www.linkedin.com/in/locustbea">Linkedin</a></li>
+    </ul>
+</details>
 
 
 
