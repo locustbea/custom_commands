@@ -141,7 +141,3 @@ This file contains the notable changes made to the Custom Commands project.
     <li><a href="https://www.linkedin.com/in/locustbea">Linkedin</a></li>
     </ul>
 </details>
-
-
-
-###### We Rise by Lifting Others.
